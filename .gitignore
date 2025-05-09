@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pkl
+
+# Envs
+.venv/
+venv/
+env/
+*.env
+**/lib/python*/site-packages/
+
+# Models and data
+models/
+*.log
+*.csv
+
+# Jupyter
+.ipynb_checkpoints/
+
+# MacOS
+.DS_Store
+
