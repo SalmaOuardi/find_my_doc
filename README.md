@@ -108,8 +108,6 @@ pytest
 ## 👩‍💻 Author
 
 **Salma Ouardi**  
-Built as part of a 4-day AI engineering challenge.  
-[GitHub](https://github.com/yourusername) _(replace with your handle)_
 
 ---
 
