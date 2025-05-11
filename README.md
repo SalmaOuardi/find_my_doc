@@ -45,7 +45,7 @@ FindMyDoc/
 ## ⚙️ Installation
 
 ```bash
-git clone https://github.com/yourusername/FindMyDoc.git
+git clone https://github.com/SalmaOuardi/find_my_doc.git
 cd FindMyDoc
 python3 -m venv venv
 source venv/bin/activate
