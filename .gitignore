@@ -22,4 +22,5 @@ models/
 .DS_Store
 
 src/find_my_doc/test-code.py
+notebooks/utils.ipynb
 

@@ -93,7 +93,7 @@ def train_intent_classifier(data_path: str, model_type="sklearn"):
       
 def predict_intent(query: str, model_type="sklearn"):
     if model_type == "sklearn":
-        pipeline = joblib.load("../../models/intent_model_sklearn.pkl")
+        pipeline = joblib.load("models/intent_model_sklearn.pkl")
         pred = pipeline.predict([query])[0]
         proba = pipeline.predict_proba([query])[0]
         label_index = list(pipeline.classes_).index(pred)
@@ -101,7 +101,7 @@ def predict_intent(query: str, model_type="sklearn"):
         return pred, confidence
 
     elif model_type in ["roberta", "deberta"]:
-        model_dir = f"../../models/hf_{model_type}"
+        model_dir = f"models/hf_{model_type}"
         tokenizer = AutoTokenizer.from_pretrained(model_dir)
         model = AutoModelForSequenceClassification.from_pretrained(model_dir)
 
