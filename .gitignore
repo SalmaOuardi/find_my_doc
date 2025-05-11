@@ -21,3 +21,5 @@ models/
 # MacOS
 .DS_Store
 
+src/find_my_doc/test-code.py
+

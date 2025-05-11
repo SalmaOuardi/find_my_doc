@@ -1,15 +1,30 @@
 import pandas as pd
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
-from datasets import Dataset
+# Standard library
+import os
+import time
+
+# Data handling
+import pandas as pd
+import joblib
+
+# Transformers
 import torch
 import torch.nn.functional as F
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    Trainer,
+    TrainingArguments,
+)
+from datasets import Dataset
+
+# Sklearn
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-import joblib
-import os
+
 
 # TODO: change the model to RoBERTa or DeBERTa.
 # TODO: Create a bigger dataset with more intents and examples.
@@ -48,7 +63,7 @@ def train_intent_classifier(data_path: str, model_type="sklearn"):
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         def tokenize(example):
-            return tokenizer(example["text"], truncation=True, padding=True)
+            return tokenizer(example["text"], truncation=True, padding=True, max_length=128)
 
         dataset = dataset.map(tokenize, batched=True)
 
@@ -78,7 +93,7 @@ def train_intent_classifier(data_path: str, model_type="sklearn"):
       
 def predict_intent(query: str, model_type="sklearn"):
     if model_type == "sklearn":
-        pipeline = joblib.load("models/intent_model_sklearn.pkl")
+        pipeline = joblib.load("../../models/intent_model_sklearn.pkl")
         pred = pipeline.predict([query])[0]
         proba = pipeline.predict_proba([query])[0]
         label_index = list(pipeline.classes_).index(pred)
@@ -86,12 +101,12 @@ def predict_intent(query: str, model_type="sklearn"):
         return pred, confidence
 
     elif model_type in ["roberta", "deberta"]:
-        model_dir = f"models/hf_{model_type}"
+        model_dir = f"../../models/hf_{model_type}"
         tokenizer = AutoTokenizer.from_pretrained(model_dir)
         model = AutoModelForSequenceClassification.from_pretrained(model_dir)
 
         label_map = {0: "COR", 1: "OOC", 2: "INC"}
-        inputs = tokenizer(query, return_tensors="pt", truncation=True, padding=True)
+        inputs = tokenizer(query, return_tensors="pt", truncation=True, padding=True, max_length=128)
         with torch.no_grad():
             logits = model(**inputs).logits
             probs = F.softmax(logits, dim=1)
@@ -100,3 +115,32 @@ def predict_intent(query: str, model_type="sklearn"):
         label = label_map[pred_idx.item()]
         return label, round(confidence.item() * 100, 2)
 
+def evaluate_intent_classifier(data_path, model_type="sklearn"):
+    df = pd.read_csv(data_path)
+    label_map = {"COR": 0, "OOC": 1, "INC": 2}
+    reverse_map = {v: k for k, v in label_map.items()}
+    df["label_id"] = df["intent"].map(label_map)
+
+    texts = df["text"].tolist()
+    true = df["intent"].tolist()
+    true_ids = df["label_id"].tolist()
+
+    preds = []
+    start_time = time.time()
+
+    for text in texts:
+        label, _ = predict_intent(text, model_type=model_type)
+        preds.append(label)
+
+    elapsed = round(time.time() - start_time, 2)
+    acc = accuracy_score(true, preds)
+    report = classification_report(true, preds, output_dict=True)
+
+    return {
+        "model": model_type,
+        "accuracy": round(acc, 4),
+        "precision_macro": round(report["macro avg"]["precision"], 4),
+        "recall_macro": round(report["macro avg"]["recall"], 4),
+        "f1_macro": round(report["macro avg"]["f1-score"], 4),
+        "inference_time": elapsed,
+    }
